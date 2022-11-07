@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+// TODO: tests :) ideally integration tests that fuzz MatchPersons
+
 type Person struct {
 	name string
 }
@@ -62,12 +64,41 @@ var Data = []*Group{
 	}},
 }
 
-var cannotMatchDeakins = []string{
-	"Robbie Shockey",
-	"David Shockey",
-	"Lea Anne Barnett",
-	"Frank Barnett",
+type ExceptionType int
+
+const (
+	CannotMatchWith = iota // bidirectional
+	CannotReceiveFrom
+	CannotGiveTo
+)
+
+type Exception struct {
+	subjectName string
+	ruleType    ExceptionType
+	targetName  string
 }
+
+var Exceptions = []*Exception{
+	// Deakins kids and their spouses cannot match with Deakins
+	{"Robbie Shockey", CannotMatchWith, "Turney Deakins"},
+	{"Robbie Shockey", CannotMatchWith, "Shirley Deakins"},
+	{"David Shockey", CannotMatchWith, "Turney Deakins"},
+	{"David Shockey", CannotMatchWith, "Shirley Deakins"},
+	{"Lea Anne Barnett", CannotMatchWith, "Turney Deakins"},
+	{"Lea Anne Barnett", CannotMatchWith, "Shirley Deakins"},
+	{"Frank Barnett", CannotMatchWith, "Turney Deakins"},
+	{"Frank Barnett", CannotMatchWith, "Shirley Deakins"},
+
+	// Barnett parents can't give to 3 youngest Maddox kids
+	{"Lea Anne Barnett", CannotGiveTo, "MK Maddox"},
+	{"Lea Anne Barnett", CannotGiveTo, "Tripp Maddox"},
+	{"Lea Anne Barnett", CannotGiveTo, "Hadley Maddox"},
+	{"Frank Barnett", CannotGiveTo, "MK Maddox"},
+	{"Frank Barnett", CannotGiveTo, "Tripp Maddox"},
+	{"Frank Barnett", CannotGiveTo, "Hadley Maddox"},
+}
+
+// TODO: sanity validate to/from names in exceptions against people — protect against misspelling
 
 // CLI flags
 var isRealModeFlag = flag.Bool("real", false, "indicates whether filenames will be written as TEST or REAL")
@@ -88,7 +119,7 @@ func main() {
 		}
 	}
 
-	res := MatchPersons(allGroupedPeople)
+	res := MatchPersons(allGroupedPeople, Exceptions)
 
 	output := "Sender,Recipient\n"
 
@@ -118,7 +149,7 @@ func main() {
 	}
 }
 
-func MatchPersons(people []*GroupedPerson) []*Match {
+func MatchPersons(people []*GroupedPerson, exceptions []*Exception) []*Match {
 	senders := people
 	shuffleGroupedPersonSlice(&senders)
 
@@ -127,7 +158,7 @@ func MatchPersons(people []*GroupedPerson) []*Match {
 
 	matches := []*Match{}
 
-	res, ok := findMatches(recipients, senders, matches)
+	res, ok := findMatches(recipients, senders, matches, exceptions)
 
 	if !ok {
 		panic("Unable to find any resolvable subtree, something is very wrong!")
@@ -138,7 +169,7 @@ func MatchPersons(people []*GroupedPerson) []*Match {
 
 // findMatches implements a recursive depth-first search strategy to find a solution that results in valid
 // matches for all persons
-func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, matches []*Match) ([]*Match, bool) {
+func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, matches []*Match, exceptions []*Exception) ([]*Match, bool) {
 	if len(pendingSenders) == 0 {
 		// No senders left, we found a good solution set
 		return matches, true
@@ -150,7 +181,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 	// Find a suitable, unused recipient for the given sender
 	for _, person := range allPeople {
 		// Check for a match against the static rules
-		isMatch := checkForMatch(sender, person)
+		isMatch := checkForMatch(sender, person, exceptions)
 
 		if !isMatch {
 			continue
@@ -171,7 +202,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 		// This person is OK! Continue exploring this subtree...
 		newMatches := matches
 		newMatches = append(newMatches, &Match{sender, person})
-		res, ok := findMatches(allPeople, pendingSenders[1:], newMatches)
+		res, ok := findMatches(allPeople, pendingSenders[1:], newMatches, exceptions)
 
 		if res != nil && ok == true {
 			// Found a path that resolves!
@@ -183,7 +214,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 	return matches, false
 }
 
-func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson) bool {
+func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson, exceptions []*Exception) bool {
 	// Can't match yourself
 	if sender == recipient {
 		return false
@@ -194,10 +225,26 @@ func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson) bool {
 		return false
 	}
 
-	// Special case: Frank, Lea, Robbie, David can't match a Deakins in any direction
-	if sender.groupName == "Deakins" || recipient.groupName == "Deakins" {
-		for _, name := range cannotMatchDeakins {
-			if sender.name == name || recipient.name == name {
+	// Check exceptions
+	for _, exception := range exceptions {
+		if exception.ruleType == CannotMatchWith {
+			if exception.subjectName == sender.name && exception.targetName == recipient.name {
+				return false
+			}
+
+			if exception.subjectName == recipient.name && exception.targetName == sender.name {
+				return false
+			}
+		}
+
+		if exception.ruleType == CannotGiveTo {
+			if exception.subjectName == sender.name && exception.targetName == recipient.name {
+				return false
+			}
+		}
+
+		if exception.ruleType == CannotReceiveFrom {
+			if exception.subjectName == recipient.name && exception.targetName == sender.name {
 				return false
 			}
 		}
