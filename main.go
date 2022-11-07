@@ -1,11 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -67,7 +69,12 @@ var cannotMatchDeakins = []string{
 	"Frank Barnett",
 }
 
+// CLI flags
+var isRealModeFlag = flag.Bool("real", false, "indicates whether filenames will be written as TEST or REAL")
+
 func main() {
+	flag.Parse()
+
 	var allGroupedPeople []*GroupedPerson
 
 	for _, group := range Data {
@@ -98,8 +105,13 @@ func main() {
 		output += entry + "\n"
 	}
 
-	dt := time.Now()
-	fileName := fmt.Sprintf("Christmas-List-%v.csv", dt.Format(time.RFC3339))
+	dt := time.Now().UTC()
+	ts := strings.ReplaceAll(dt.Format(time.RFC3339), ":", "")
+	var modestring = "TEST"
+	if *isRealModeFlag {
+		modestring = "REAL"
+	}
+	fileName := fmt.Sprintf("Christmas-List-%v-%v.csv", ts, modestring)
 
 	if err := os.WriteFile(fileName, []byte(output), 0666); err != nil {
 		log.Fatal(err)
