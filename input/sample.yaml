@@ -1,0 +1,44 @@
+version: "1.0"
+
+groups:
+- Actors:
+    members: 
+    - Denzel Washington
+    - Tom Hanks
+    - Marilyn Monroe
+    - Robert De Niro
+    - Katharine Hepburn
+- Singers:
+    members:
+    - Billy Joel
+    - Celine Dion
+    - Mariah Carey
+    - Ray Charles
+    - Aretha Franklin
+- Painters:
+    members:
+    - Frida Kahlo
+    - Andy Warhol
+    - Salvador Dali
+    - Georgia O'Keefe
+    - Bob Ross
+- Presidents:
+    members:
+    - Abraham Lincoln
+    - George Washington
+    - Franklin D. Roosevelt
+    - Theodore Roosevelt
+    - Thomas Jefferson
+
+rules:
+- NoMatchBetween:
+  # Andy doesn't get along with singers...
+  - groups: [Singers]
+  - people: [Andy Warhol]
+- NoMatchTo:
+  # Bob is a bit of a pacifist these days, so no politicians
+    from: 
+      people: [Bob Ross]
+    to:
+      groups: [Presidents]
+

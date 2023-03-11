@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/shockey/secret-santa/config"
 )
 
 // TODO: tests :) ideally integration tests that fuzz MatchPersons
@@ -50,24 +52,32 @@ type Exception struct {
 
 // CLI flags
 var isRealModeFlag = flag.Bool("real", false, "indicates whether filenames will be written as TEST or REAL")
+var inputNameFlag = flag.String("input", "", "the name of the input config profile to use")
 
 func main() {
 	flag.Parse()
 
+	if *inputNameFlag == "" {
+		fmt.Fprintf(os.Stderr, "missing required argument flag `input`")
+		os.Exit(2) // the same exit code flag.Parse uses
+	}
+
+	inputDocument := config.MustLoadConfigDocument(*inputNameFlag)
+
 	var allGroupedPeople []*GroupedPerson
 
-	for _, group := range Groups {
-		groupName := group.name
-
-		for _, person := range group.members {
-			allGroupedPeople = append(allGroupedPeople, &GroupedPerson{
-				name:      person.name,
-				groupName: groupName,
-			})
+	for _, groupRecord := range inputDocument.Groups {
+		for groupName, group := range groupRecord {
+			for _, personName := range group.Members {
+				allGroupedPeople = append(allGroupedPeople, &GroupedPerson{
+					name:      personName,
+					groupName: groupName,
+				})
+			}
 		}
 	}
 
-	res := MatchPersons(allGroupedPeople, Exceptions)
+	res := MatchPersons(allGroupedPeople, inputDocument.Rules)
 
 	output := "Sender,Recipient\n"
 
@@ -90,14 +100,14 @@ func main() {
 	if *isRealModeFlag {
 		modestring = "REAL"
 	}
-	fileName := fmt.Sprintf("Christmas-List-%v-%v.csv", ts, modestring)
+	fileName := fmt.Sprintf("output/Christmas-List-%v-%v.csv", ts, modestring)
 
 	if err := os.WriteFile(fileName, []byte(output), 0666); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func MatchPersons(people []*GroupedPerson, exceptions []*Exception) []*Match {
+func MatchPersons(people []*GroupedPerson, rules []*config.Rule) []*Match {
 	senders := people
 	shuffleGroupedPersonSlice(&senders)
 
@@ -106,7 +116,7 @@ func MatchPersons(people []*GroupedPerson, exceptions []*Exception) []*Match {
 
 	matches := []*Match{}
 
-	res, ok := findMatches(recipients, senders, matches, exceptions)
+	res, ok := findMatches(recipients, senders, matches, rules)
 
 	if !ok {
 		panic("Unable to find any resolvable subtree, something is very wrong!")
@@ -117,7 +127,7 @@ func MatchPersons(people []*GroupedPerson, exceptions []*Exception) []*Match {
 
 // findMatches implements a recursive depth-first search strategy to find a solution that results in valid
 // matches for all persons
-func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, matches []*Match, exceptions []*Exception) ([]*Match, bool) {
+func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, matches []*Match, rules []*config.Rule) ([]*Match, bool) {
 	if len(pendingSenders) == 0 {
 		// No senders left, we found a good solution set
 		return matches, true
@@ -129,7 +139,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 	// Find a suitable, unused recipient for the given sender
 	for _, person := range allPeople {
 		// Check for a match against the static rules
-		isMatch := checkForMatch(sender, person, exceptions)
+		isMatch := checkForMatch(sender, person, rules)
 
 		if !isMatch {
 			continue
@@ -150,7 +160,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 		// This person is OK! Continue exploring this subtree...
 		newMatches := matches
 		newMatches = append(newMatches, &Match{sender, person})
-		res, ok := findMatches(allPeople, pendingSenders[1:], newMatches, exceptions)
+		res, ok := findMatches(allPeople, pendingSenders[1:], newMatches, rules)
 
 		if res != nil && ok == true {
 			// Found a path that resolves!
@@ -162,7 +172,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 	return matches, false
 }
 
-func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson, exceptions []*Exception) bool {
+func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson, rules []*config.Rule) bool {
 	// Can't match yourself
 	if sender == recipient {
 		return false
@@ -174,25 +184,22 @@ func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson, exceptions [
 	}
 
 	// Check exceptions
-	for _, exception := range exceptions {
-		if exception.ruleType == CannotMatchWith {
-			if exception.subjectName == sender.name && exception.targetName == recipient.name {
-				return false
-			}
+	for _, rule := range rules {
+		if rule.NoMatchBetween != nil {
+			criteria := rule.NoMatchBetween
 
-			if exception.subjectName == recipient.name && exception.targetName == sender.name {
-				return false
-			}
-		}
+			doesSenderMatch := criteria[0].DoesPersonMatch(sender.name, sender.groupName) || criteria[1].DoesPersonMatch(sender.name, sender.groupName)
+			doesRecipientMatch := criteria[0].DoesPersonMatch(recipient.name, recipient.groupName) || criteria[1].DoesPersonMatch(recipient.name, recipient.groupName)
 
-		if exception.ruleType == CannotGiveTo {
-			if exception.subjectName == sender.name && exception.targetName == recipient.name {
+			if doesSenderMatch && doesRecipientMatch {
 				return false
 			}
 		}
 
-		if exception.ruleType == CannotReceiveFrom {
-			if exception.subjectName == recipient.name && exception.targetName == sender.name {
+		if rule.NoMatchTo != nil {
+			criteria := rule.NoMatchTo
+
+			if criteria.From.DoesPersonMatch(sender.name, sender.groupName) && criteria.To.DoesPersonMatch(recipient.name, recipient.groupName) {
 				return false
 			}
 		}
