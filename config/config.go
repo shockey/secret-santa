@@ -25,8 +25,6 @@ type Group struct {
 	Members []string `yaml:"members"`
 }
 
-// Rules
-
 func MustLoadConfigDocument(inputName string) *Document {
 	filename := fmt.Sprintf("input/%v.yaml", inputName)
 
@@ -40,7 +38,7 @@ func MustLoadConfigDocument(inputName string) *Document {
 
 	var document Document = Document{}
 
-	err = yaml.Unmarshal(buf, &document)
+	err = yaml.UnmarshalStrict(buf, &document)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
