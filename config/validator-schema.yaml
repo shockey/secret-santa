@@ -1,0 +1,50 @@
+---
+"$schema": http://json-schema.org/draft-07/schema#
+type: object
+required:
+- version
+- groups
+additionalProperties: false
+properties:
+  version:
+    type: string
+    enum: 
+    - "1.0"
+  groups:
+    type: array
+    items:
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties: false
+        required:
+        - members
+        properties:
+          members:
+            type: array
+            minLength: 1
+            items:
+              type: string
+  rules:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties: 
+        NoMatchBetween:
+          type: array
+          minLength: 2
+          maxLength: 2
+          items:
+            type: object
+            minProperties: 1
+            maxProperties: 1
+            properties:
+              groups:
+                type: array
+                minLength: 1
+              people:
+                type: array
+                minLength: 1
+        NoMatchTo:
+          type: object

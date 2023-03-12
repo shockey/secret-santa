@@ -36,9 +36,11 @@ func MustLoadConfigDocument(inputName string) *Document {
 
 	buf, _ := ioutil.ReadAll(file)
 
+	mustValidateConfig(&buf)
+
 	var document Document = Document{}
 
-	err = yaml.UnmarshalStrict(buf, &document)
+	err = yaml.Unmarshal(buf, &document)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
