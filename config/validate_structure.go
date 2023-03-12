@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/icza/dyno"
 	"github.com/qri-io/jsonschema"
-	"gopkg.in/yaml.v2"
 )
 
-func mustValidateConfig(inputDocBuf *[]byte) {
+// mustValidateConfigStructure takes an input document in as a sequence of
+// bytes, for the purpose of checking it against a schema. This intentionally
+// happens before we parse the document as YAML into our structures, so that
+// nonsensical inputs can be caught early.
+func mustValidateConfigStructure(inputDocBuf *[]byte) {
 	// Load the validation schema
 	file, err := os.Open("config/validator-schema.yaml")
 	if err != nil {
@@ -50,28 +52,6 @@ func mustValidateConfig(inputDocBuf *[]byte) {
 		for i, ve := range errs {
 			fmt.Fprintf(os.Stderr, "%v: %v\n", i, ve.Error())
 		}
-		os.Exit(1)
 	}
 
-}
-
-func convertYamlBytesToJsonBytes(yamlBuf *[]byte) *[]byte {
-	var tmp interface{}
-
-	err := yaml.Unmarshal(*yamlBuf, &tmp)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
-		os.Exit(1)
-	}
-
-	// Context/author: https://stackoverflow.com/a/40737676
-	tempMapS := dyno.ConvertMapI2MapS(tmp)
-
-	jsonBytes, err := json.Marshal(tempMapS)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
-		os.Exit(1)
-	}
-
-	return &jsonBytes
 }

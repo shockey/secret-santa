@@ -36,7 +36,7 @@ func MustLoadConfigDocument(inputName string) *Document {
 
 	buf, _ := ioutil.ReadAll(file)
 
-	mustValidateConfig(&buf)
+	mustValidateConfigStructure(&buf)
 
 	var document Document = Document{}
 
@@ -45,6 +45,8 @@ func MustLoadConfigDocument(inputName string) *Document {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
+
+	mustValidateConfigDocument(&document)
 
 	fmt.Printf("--- t:\n%+v\n\n", document)
 
