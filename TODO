@@ -1,0 +1,9 @@
+- [x] Create a more expressive configuration syntax (YAML? TOML? Python/Lua DSL?)
+- [x] Emit outputs to `/output`
+- [x] Config structural validation (JSON Schema)
+- [x] Config semantic validation (unique names)
+- [ ] Fuzzing tests that ensure matching is not biased
+- [ ] Improve docs
+- [ ] Perf
+- [ ] Static analysis of configuration that detects unsolvable situations before processing (is this possible...?)
+- [ ] Post-solve validation before validating output (every person has a match, nobody is repeated)
