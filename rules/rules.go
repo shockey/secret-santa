@@ -2,8 +2,8 @@ package rules
 
 // TODO: sumtype instead? https://github.com/BurntSushi/go-sumtype
 type Rule struct {
-	NoMatchBetween *NoMatchNondirectionalCondition
-	NoMatchTo      *NoMatchDirectionalCondition
+	NoMatchBetween *NoMatchNondirectionalCondition `yaml:"NoMatchBetween"`
+	NoMatchTo      *NoMatchDirectionalCondition    `yaml:"NoMatchTo"`
 }
 
 func (r *Rule) DoesPairMatch(senderPersonName string, senderGroupName string, recipientPersonName string, recipientGroupName string) bool {
