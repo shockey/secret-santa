@@ -1,4 +1,4 @@
-package config
+package configreader
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 // nonsensical inputs can be caught early.
 func mustValidateConfigStructure(inputDocBuf *[]byte) {
 	// Load the validation schema
-	file, err := os.Open("config/validator-schema.yaml")
+	file, err := os.Open("configreader/validator-schema.yaml")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
 		os.Exit(1)

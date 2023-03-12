@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shockey/secret-santa/config"
+	"github.com/shockey/secret-santa/configreader"
 	"github.com/shockey/secret-santa/rules"
 )
 
@@ -53,7 +53,7 @@ func main() {
 		os.Exit(2) // the same exit code flag.Parse uses
 	}
 
-	inputDocument := config.MustLoadConfigDocument(*inputNameFlag)
+	inputDocument := configreader.MustLoadConfigDocument(*inputNameFlag)
 
 	var allGroupedPeople []*GroupedPerson
 

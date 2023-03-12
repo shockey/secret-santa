@@ -1,4 +1,4 @@
-package config
+package configreader
 
 import (
 	"encoding/json"
