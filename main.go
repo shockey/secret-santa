@@ -35,21 +35,11 @@ type Match struct {
 	recipient *GroupedPerson
 }
 
-type ExceptionType int
-
 const (
 	CannotMatchWith = iota // bidirectional
 	CannotReceiveFrom
 	CannotGiveTo
 )
-
-type Exception struct {
-	subjectName string
-	ruleType    ExceptionType
-	targetName  string
-}
-
-// TODO: sanity validate to/from names in exceptions against people — protect against misspelling
 
 // CLI flags
 var isRealModeFlag = flag.Bool("real", false, "indicates whether filenames will be written as TEST or REAL")
@@ -101,7 +91,7 @@ func main() {
 	if *isRealModeFlag {
 		modestring = "REAL"
 	}
-	fileName := fmt.Sprintf("output/Christmas-List-%v-%v.csv", ts, modestring)
+	fileName := fmt.Sprintf("output/List-%v-%v.csv", ts, modestring)
 
 	if err := os.WriteFile(fileName, []byte(output), 0666); err != nil {
 		log.Fatal(err)

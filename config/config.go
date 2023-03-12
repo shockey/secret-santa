@@ -48,7 +48,5 @@ func MustLoadConfigDocument(inputName string) *Document {
 
 	mustValidateConfigDocument(&document)
 
-	fmt.Printf("--- t:\n%+v\n\n", document)
-
 	return &document
 }
