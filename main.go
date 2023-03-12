@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/shockey/secret-santa/config"
+	"github.com/shockey/secret-santa/rules"
 )
 
 // TODO: tests :) ideally integration tests that fuzz MatchPersons
@@ -107,7 +108,7 @@ func main() {
 	}
 }
 
-func MatchPersons(people []*GroupedPerson, rules []*config.Rule) []*Match {
+func MatchPersons(people []*GroupedPerson, rules []*rules.Rule) []*Match {
 	senders := people
 	shuffleGroupedPersonSlice(&senders)
 
@@ -127,7 +128,7 @@ func MatchPersons(people []*GroupedPerson, rules []*config.Rule) []*Match {
 
 // findMatches implements a recursive depth-first search strategy to find a solution that results in valid
 // matches for all persons
-func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, matches []*Match, rules []*config.Rule) ([]*Match, bool) {
+func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, matches []*Match, rules []*rules.Rule) ([]*Match, bool) {
 	if len(pendingSenders) == 0 {
 		// No senders left, we found a good solution set
 		return matches, true
@@ -139,9 +140,16 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 	// Find a suitable, unused recipient for the given sender
 	for _, person := range allPeople {
 		// Check for a match against the static rules
-		isMatch := checkForMatch(sender, person, rules)
+		var isMatchForAllRules bool = true
 
-		if !isMatch {
+		for _, rule := range rules {
+			if isMatch := rule.DoesPairMatch(sender.name, sender.groupName, person.name, person.groupName); !isMatch {
+				isMatchForAllRules = false
+				break
+			}
+		}
+
+		if !isMatchForAllRules {
 			continue
 		}
 
@@ -170,42 +178,6 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 
 	// If we land here, we aren't on a viable path in this subtree
 	return matches, false
-}
-
-func checkForMatch(sender *GroupedPerson, recipient *GroupedPerson, rules []*config.Rule) bool {
-	// Can't match yourself
-	if sender == recipient {
-		return false
-	}
-
-	// Can't match someone in your group
-	if sender.groupName == recipient.groupName {
-		return false
-	}
-
-	// Check exceptions
-	for _, rule := range rules {
-		if rule.NoMatchBetween != nil {
-			criteria := rule.NoMatchBetween
-
-			doesSenderMatch := criteria[0].DoesPersonMatch(sender.name, sender.groupName) || criteria[1].DoesPersonMatch(sender.name, sender.groupName)
-			doesRecipientMatch := criteria[0].DoesPersonMatch(recipient.name, recipient.groupName) || criteria[1].DoesPersonMatch(recipient.name, recipient.groupName)
-
-			if doesSenderMatch && doesRecipientMatch {
-				return false
-			}
-		}
-
-		if rule.NoMatchTo != nil {
-			criteria := rule.NoMatchTo
-
-			if criteria.From.DoesPersonMatch(sender.name, sender.groupName) && criteria.To.DoesPersonMatch(recipient.name, recipient.groupName) {
-				return false
-			}
-		}
-	}
-
-	return true
 }
 
 func shuffleGroupedPersonSlice(ptr *[]*GroupedPerson) {

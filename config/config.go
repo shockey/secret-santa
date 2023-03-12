@@ -5,13 +5,14 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/shockey/secret-santa/rules"
 	"gopkg.in/yaml.v2"
 )
 
 type Document struct {
 	Version DocumentVersion
 	Groups  []map[string]*Group
-	Rules   []*Rule
+	Rules   []*rules.Rule
 }
 
 type DocumentVersion string
@@ -25,44 +26,6 @@ type Group struct {
 }
 
 // Rules
-
-// TODO: sumtype instead? https://github.com/BurntSushi/go-sumtype
-type Rule struct {
-	NoMatchBetween *NoMatchNondirectionalCondition
-	NoMatchTo      *NoMatchDirectionalCondition
-}
-
-type NoMatchNondirectionalCondition [2]*EntityMatcher
-
-type NoMatchDirectionalCondition struct {
-	From *EntityMatcher `yaml:"from"`
-	To   *EntityMatcher `yaml:"to"`
-}
-
-type EntityMatcher struct {
-	Groups *[]string
-	People *[]string
-}
-
-func (e *EntityMatcher) DoesPersonMatch(personName string, groupName string) bool {
-	if e.People != nil {
-		for _, matchablePerson := range *e.People {
-			if matchablePerson == personName {
-				return true
-			}
-		}
-	}
-
-	if e.Groups != nil {
-		for _, matchableGroup := range *e.Groups {
-			if matchableGroup == groupName {
-				return true
-			}
-		}
-	}
-
-	return false
-}
 
 func MustLoadConfigDocument(inputName string) *Document {
 	filename := fmt.Sprintf("input/%v.yaml", inputName)
