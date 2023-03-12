@@ -6,7 +6,7 @@ type Rule struct {
 	NoMatchTo      *NoMatchDirectionalCondition    `yaml:"NoMatchTo"`
 }
 
-func (r *Rule) DoesPairMatch(senderPersonName string, senderGroupName string, recipientPersonName string, recipientGroupName string) bool {
+func (r *Rule) IsPairMatchable(senderPersonName string, senderGroupName string, recipientPersonName string, recipientGroupName string) bool {
 	// Can't match yourself
 	if senderPersonName == recipientPersonName && senderGroupName == recipientGroupName {
 		return false
@@ -20,10 +20,13 @@ func (r *Rule) DoesPairMatch(senderPersonName string, senderGroupName string, re
 	if r.NoMatchBetween != nil {
 		criteria := r.NoMatchBetween
 
-		doesSenderMatch := criteria[0].DoesPersonMatch(senderPersonName, senderGroupName) || criteria[1].DoesPersonMatch(senderPersonName, senderGroupName)
-		doesRecipientMatch := criteria[0].DoesPersonMatch(recipientPersonName, recipientGroupName) || criteria[1].DoesPersonMatch(recipientPersonName, recipientGroupName)
+		// This reads a bit backwards, but is correct: if everyone matches the
+		// rule, the sender and receiver are _not_ a "match", so we shouldn't
+		// allow them to pair off.
+		doesSenderMatchRule := criteria[0].DoesPersonMatch(senderPersonName, senderGroupName) || criteria[1].DoesPersonMatch(senderPersonName, senderGroupName)
+		doesRecipientMatchRule := criteria[0].DoesPersonMatch(recipientPersonName, recipientGroupName) || criteria[1].DoesPersonMatch(recipientPersonName, recipientGroupName)
 
-		if doesSenderMatch && doesRecipientMatch {
+		if doesSenderMatchRule && doesRecipientMatchRule {
 			return false
 		}
 	}

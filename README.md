@@ -1,4 +1,4 @@
-# secret-santa 🧑‍🎄
+# secret-santa 🤫🧑‍🎄
 
 Use the power of depth-first search to match multiple groups of gift-givers among each other, with support for flexible matching rules ("exceptions").
 

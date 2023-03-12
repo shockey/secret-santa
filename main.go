@@ -133,7 +133,7 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 		var isMatchForAllRules bool = true
 
 		for _, rule := range rules {
-			if isMatch := rule.DoesPairMatch(sender.name, sender.groupName, person.name, person.groupName); !isMatch {
+			if isMatch := rule.IsPairMatchable(sender.name, sender.groupName, person.name, person.groupName); !isMatch {
 				isMatchForAllRules = false
 				break
 			}
