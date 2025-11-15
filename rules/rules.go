@@ -1,5 +1,7 @@
 package rules
 
+import "slices"
+
 // TODO: sumtype instead? https://github.com/BurntSushi/go-sumtype
 type Rule struct {
 	NoMatchBetween *NoMatchNondirectionalCondition `yaml:"NoMatchBetween"`
@@ -56,18 +58,14 @@ type EntityMatcher struct {
 
 func (e *EntityMatcher) DoesPersonMatch(personName string, groupName string) bool {
 	if e.People != nil {
-		for _, matchablePerson := range *e.People {
-			if matchablePerson == personName {
-				return true
-			}
+		if slices.Contains(*e.People, personName) {
+			return true
 		}
 	}
 
 	if e.Groups != nil {
-		for _, matchableGroup := range *e.Groups {
-			if matchableGroup == groupName {
-				return true
-			}
+		if slices.Contains(*e.Groups, groupName) {
+			return true
 		}
 	}
 

@@ -2,7 +2,7 @@ package configreader
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/shockey/secret-santa/rules"
@@ -34,7 +34,7 @@ func MustLoadConfigDocument(inputName string) *Document {
 		os.Exit(1)
 	}
 
-	buf, _ := ioutil.ReadAll(file)
+	buf, _ := io.ReadAll(file)
 
 	mustValidateConfigStructure(&buf)
 

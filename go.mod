@@ -1,9 +1,11 @@
 module github.com/shockey/secret-santa
 
-go 1.16
+go 1.25
 
 require (
-	github.com/icza/dyno v0.0.0-20220812133438-f0b6f8a18845 // indirect
+	github.com/icza/dyno v0.0.0-20220812133438-f0b6f8a18845
 	github.com/qri-io/jsonschema v0.2.1
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+require github.com/qri-io/jsonpointer v0.1.1 // indirect

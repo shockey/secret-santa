@@ -6,7 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -70,8 +70,6 @@ func main() {
 
 	res := MatchPersons(allGroupedPeople, inputDocument.Rules)
 
-	output := "Sender,Recipient\n"
-
 	entries := []string{}
 
 	for _, v := range res {
@@ -79,11 +77,15 @@ func main() {
 		entries = append(entries, entry)
 	}
 
-	sort.Strings(entries)
+	slices.Sort(entries)
 
+	var builder strings.Builder
+	builder.WriteString("Sender,Recipient\n")
 	for _, entry := range entries {
-		output += entry + "\n"
+		builder.WriteString(entry)
+		builder.WriteString("\n")
 	}
+	output := builder.String()
 
 	dt := time.Now().UTC()
 	ts := strings.ReplaceAll(dt.Format(time.RFC3339), ":", "")
@@ -144,14 +146,9 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 		}
 
 		// Consider prior search state to disqualify already-tagged recipients
-		isAlreadyMatched := false
-		for _, match := range matches {
-			if match.recipient == person {
-				isAlreadyMatched = true
-			}
-		}
-
-		if isAlreadyMatched {
+		if slices.ContainsFunc(matches, func(m *Match) bool {
+			return m.recipient == person
+		}) {
 			continue
 		}
 
@@ -172,6 +169,5 @@ func findMatches(allPeople []*GroupedPerson, pendingSenders []*GroupedPerson, ma
 
 func shuffleGroupedPersonSlice(ptr *[]*GroupedPerson) {
 	slice := *ptr
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(slice), func(i, j int) { slice[i], slice[j] = slice[j], slice[i] })
 }
