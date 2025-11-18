@@ -60,6 +60,10 @@ func main() {
 	for _, groupRecord := range inputDocument.Groups {
 		for groupName, group := range groupRecord {
 			for _, personName := range group.Members {
+				if _, ok := inputDocument.InactiveGroupMembersMap[[2]string{groupName, personName}]; ok {
+					// Skip inactive members
+					continue
+				}
 				allGroupedPeople = append(allGroupedPeople, &GroupedPerson{
 					name:      personName,
 					groupName: groupName,

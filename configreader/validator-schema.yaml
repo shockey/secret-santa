@@ -2,14 +2,15 @@
 "$schema": http://json-schema.org/draft-07/schema#
 type: object
 required:
-- version
-- groups
+  - version
+  - groups
 additionalProperties: false
 properties:
   version:
     type: string
-    enum: 
-    - "1.0"
+    enum:
+      - "1.0"
+      - "1.1"
   groups:
     type: array
     items:
@@ -18,7 +19,7 @@ properties:
         type: object
         additionalProperties: false
         required:
-        - members
+          - members
         properties:
           members:
             type: array
@@ -30,7 +31,7 @@ properties:
     items:
       type: object
       additionalProperties: false
-      properties: 
+      properties:
         NoMatchBetween:
           type: array
           minLength: 2
@@ -48,3 +49,11 @@ properties:
                 minLength: 1
         NoMatchTo:
           type: object
+  inactiveGroupMembers:
+    type: array
+    items:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        type: string
