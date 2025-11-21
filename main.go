@@ -84,7 +84,7 @@ func main() {
 	slices.Sort(entries)
 
 	var builder strings.Builder
-	builder.WriteString("Sender,Recipient\n")
+	builder.WriteString("Giver,Recipient\n")
 	for _, entry := range entries {
 		builder.WriteString(entry)
 		builder.WriteString("\n")
@@ -92,7 +92,7 @@ func main() {
 	output := builder.String()
 
 	dt := time.Now().UTC()
-	ts := strings.ReplaceAll(dt.Format(time.RFC3339), ":", "")
+	ts := strings.ReplaceAll(strings.ReplaceAll(dt.Format(time.RFC3339), ":", ""), "T", "-")
 	var modestring = "TEST"
 	if *isRealModeFlag {
 		modestring = "REAL"
