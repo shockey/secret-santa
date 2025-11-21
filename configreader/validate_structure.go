@@ -1,14 +1,12 @@
 package configreader
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/qri-io/jsonschema"
+	"github.com/kaptinlin/jsonschema"
 )
 
 // mustValidateConfigStructure takes an input document in as a sequence of
@@ -32,28 +30,23 @@ func mustValidateConfigStructure(documentVersion DocumentVersion, inputDocBuf *[
 
 	validationSchemaJsonBuffer := convertYamlBytesToJsonBytes(&validationSchemaYamlBuffer)
 
-	validationSchema := &jsonschema.Schema{}
-
-	err = json.Unmarshal(*validationSchemaJsonBuffer, &validationSchema)
+	compiler := jsonschema.NewCompiler()
+	validationSchema, err := compiler.Compile(*validationSchemaJsonBuffer)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Error compiling schema: %v\n", err.Error())
 		os.Exit(1)
 	}
 
-	// Convert the document we're validating, then validate
 	inputDocJsonBytes := convertYamlBytesToJsonBytes(inputDocBuf)
 
-	errs, err := validationSchema.ValidateBytes(context.Background(), *inputDocJsonBytes)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
+	result := validationSchema.ValidateJSON(*inputDocJsonBytes)
+
+	if !result.IsValid() {
+		fmt.Fprint(os.Stderr, "Your input configuration is invalid :(\nHere's what the validation engine said:\n")
+		detailedErrors := result.GetDetailedErrors()
+		for field, message := range detailedErrors {
+			fmt.Fprintf(os.Stderr, "%v: %v\n", field, message)
+		}
 		os.Exit(1)
 	}
-
-	if len(errs) > 0 {
-		fmt.Fprint(os.Stderr, "Your input configuration is invalid :(\nHere's what the validation engine said:\n")
-		for i, ve := range errs {
-			fmt.Fprintf(os.Stderr, "%v: %v %v\n", i, ve.PropertyPath, ve.Message)
-		}
-	}
-
 }
