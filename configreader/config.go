@@ -39,8 +39,6 @@ func MustLoadConfigDocument(inputName string) *Document {
 
 	buf, _ := io.ReadAll(file)
 
-	mustValidateConfigStructure(&buf)
-
 	var document Document = Document{}
 
 	err = yaml.Unmarshal(buf, &document)
@@ -48,6 +46,8 @@ func MustLoadConfigDocument(inputName string) *Document {
 		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
+
+	mustValidateConfigStructure(document.Version, &buf)
 
 	mustValidateConfigDocument(&document)
 

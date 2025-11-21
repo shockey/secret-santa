@@ -6,19 +6,21 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/qri-io/jsonschema"
 )
 
 // mustValidateConfigStructure takes an input document in as a sequence of
-// bytes, for the purpose of checking it against a schema. This intentionally
-// happens before we parse the document as YAML into our structures, so that
-// nonsensical inputs can be caught early.
-func mustValidateConfigStructure(inputDocBuf *[]byte) {
+// bytes, for the purpose of checking it against a schema.
+func mustValidateConfigStructure(documentVersion DocumentVersion, inputDocBuf *[]byte) {
 	// Load the validation schema
-	file, err := os.Open("configreader/validator-schema.yaml")
+
+	versionSchemaName := strings.ReplaceAll(string(documentVersion), ".", "-")
+	file, err := os.Open(fmt.Sprintf("configreader/schemas/%s.yaml", versionSchemaName))
+
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Error loading validation schema: %v\n", err.Error())
 		os.Exit(1)
 	}
 
@@ -50,7 +52,7 @@ func mustValidateConfigStructure(inputDocBuf *[]byte) {
 	if len(errs) > 0 {
 		fmt.Fprint(os.Stderr, "Your input configuration is invalid :(\nHere's what the validation engine said:\n")
 		for i, ve := range errs {
-			fmt.Fprintf(os.Stderr, "%v: %v\n", i, ve.Error())
+			fmt.Fprintf(os.Stderr, "%v: %v %v\n", i, ve.PropertyPath, ve.Message)
 		}
 	}
 

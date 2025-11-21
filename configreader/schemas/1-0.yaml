@@ -10,7 +10,6 @@ properties:
     type: string
     enum:
       - "1.0"
-      - "1.1"
   groups:
     type: array
     items:
@@ -49,11 +48,3 @@ properties:
                 minLength: 1
         NoMatchTo:
           type: object
-  inactiveGroupMembers:
-    type: array
-    items:
-      type: array
-      minItems: 2
-      maxItems: 2
-      items:
-        type: string
