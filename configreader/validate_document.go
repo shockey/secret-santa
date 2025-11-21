@@ -1,7 +1,6 @@
 package configreader
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -46,7 +45,7 @@ func validatePersonNameUniqueness(doc *Document) *[]error {
 
 	for personName, seenIn := range seen {
 		if len(seenIn) > 1 {
-			errs = append(errs, errors.New(fmt.Sprintf(`the name "%v" appears more than once (seen %v times, in groups %v)`, personName, len(seenIn), seenIn)))
+			errs = append(errs, fmt.Errorf(`the name "%v" appears more than once (seen %v times, in groups %v)`, personName, len(seenIn), seenIn))
 		}
 	}
 
@@ -65,7 +64,7 @@ func validateGroupUniqueness(doc *Document) *[]error {
 
 	for groupName, count := range seen {
 		if count > 1 {
-			errs = append(errs, errors.New(fmt.Sprintf(`the group "%v" appears more than once (seen %v times)`, groupName, count)))
+			errs = append(errs, fmt.Errorf(`the group "%v" appears more than once (seen %v times)`, groupName, count))
 		}
 	}
 
@@ -116,7 +115,7 @@ func subvalidateEntityMatcherIntegrity(knownGroups *map[string]bool, knownPeople
 	if em.Groups != nil {
 		for j, groupName := range *em.Groups {
 			if _, exists := (*knownGroups)[groupName]; !exists {
-				errs = append(errs, errors.New(fmt.Sprintf(`%v.groups.%v references nonexistent group name "%v"`, locationPrefix, j, groupName)))
+				errs = append(errs, fmt.Errorf(`%v.groups.%v references nonexistent group name "%v"`, locationPrefix, j, groupName))
 			}
 		}
 	}
@@ -124,7 +123,7 @@ func subvalidateEntityMatcherIntegrity(knownGroups *map[string]bool, knownPeople
 	if em.People != nil {
 		for j, personName := range *em.People {
 			if _, exists := (*knownPeople)[personName]; !exists {
-				errs = append(errs, errors.New(fmt.Sprintf(`%v.people.%v references nonexistent person name "%v"`, locationPrefix, j, personName)))
+				errs = append(errs, fmt.Errorf(`%v.people.%v references nonexistent person name "%v"`, locationPrefix, j, personName))
 			}
 		}
 	}
